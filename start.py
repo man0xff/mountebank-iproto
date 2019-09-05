@@ -164,14 +164,17 @@ async def main():
 
             buf, ok = await read_exactly(sock, 12)
             if not ok or not buf:
-                return
+                break
             header, _ = iproto.unpack_header(buf)
 
-            payload, ok = await read_exactly(sock, header.len)
-            if not ok or not payload:
-                return
+            payload = b''
+            if header.len:
+                payload, ok = await read_exactly(sock, header.len)
+                if not ok or not payload:
+                    break
 
             app.loop.create_task(process_request(app, sock, addr, header, payload))
+        sock.close()
 
     await start_server('0.0.0.0', config['port'], serve)
 
