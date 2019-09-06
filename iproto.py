@@ -59,15 +59,43 @@ def printf(fmt, vals):
     return
 
 
+def _mp_fmt(key):
+    key >>= 5
+    if key == 0:
+        return 'w'
+    elif key == 1:
+        return 'W'
+    return None
+
+
+def unpack_mp(buf):
+
+    vals = {}
+    while len(buf) > 0:
+
+        key, err, buf = scanf('w', buf)
+        if err:
+            return None, err
+        key = key[0]
+
+        val, err, buf = scanf(_mp_fmt(key), buf)
+        if err:
+            return None, err
+        vals[key] = val[0]
+
+    return vals, None
+
+
 def _berint_decode(buf):
     val = 0
     for i in range(5):
         if len(buf) < 1:
             return None, "too small buffer", buf
         val = (val << 7) | buf[0] & 0x7F
-        if not (buf[0] & 0x80):
-            break
+        next = buf[0] & 0x80
         buf = buf[1:]
+        if not next:
+            break
     return val, None, buf
 
 

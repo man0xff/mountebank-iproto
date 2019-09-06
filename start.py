@@ -51,12 +51,30 @@ def unserialize(rules, header, payload):
 
         if 'format' in rules:
             fmt = rules['format']
-            vals, err, _ = iproto.scanf(fmt, payload)
-            if err:
-                return None, f"decoding failed (fmt:'{fmt}'): {err}"
-            if len(vals) != len(rules['names']):
-                return None, f"incorrect number of names (msg:{header.msg})"
-            return dict(zip(rules['names'], vals)), None
+
+            if fmt == 'mp':
+
+                pairs, err = iproto.unpack_mp(payload)
+                if err:
+                    return None, f"decoding failed (fmt:'{fmt}'): {err}"
+                names = {v: k for k, v in rules['names'].items()}
+                vals = {}
+                for k, v in pairs.items():
+                    if type(v) == bytearray or type(v) == bytes:
+                        v = v.hex()
+                    vals[names[k]] = v
+                return vals, None
+
+            else:
+                vals, err, _ = iproto.scanf(fmt, payload)
+                if err:
+                    return None, f"decoding failed (fmt:'{fmt}'): {err}"
+                if len(vals) != len(rules['names']):
+                    return None, f"incorrect number of names (msg:{header.msg})"
+                return dict(zip(rules['names'], vals)), None
+
+        else:
+            return {}, None
 
     return None, f"no rule (msg:{header.msg})"
 
