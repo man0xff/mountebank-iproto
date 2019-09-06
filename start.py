@@ -58,7 +58,9 @@ def unserialize(rules, header, payload):
                 if err:
                     return None, f"decoding failed (fmt:'{fmt}'): {err}"
                 names = {v: k for k, v in rules['names'].items()}
-                vals = {}
+                vals = {
+                    'msg': header.msg,
+                }
                 for k, v in pairs.items():
                     if type(v) == bytearray or type(v) == bytes:
                         v = v.hex()
@@ -71,10 +73,12 @@ def unserialize(rules, header, payload):
                     return None, f"decoding failed (fmt:'{fmt}'): {err}"
                 if len(vals) != len(rules['names']):
                     return None, f"incorrect number of names (msg:{header.msg})"
-                return dict(zip(rules['names'], vals)), None
+                vals = dict(zip(rules['names'], vals))
+                vals['msg'] = header.msg
+                return vals, None
 
         else:
-            return {}, None
+            return {'msg': header.msg}, None
 
     return None, f"no rule (msg:{header.msg})"
 
